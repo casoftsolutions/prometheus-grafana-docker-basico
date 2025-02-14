@@ -1,0 +1,89 @@
+services:
+  api:
+    image: kubedevio/pedelogo-catalogo:v1.0.0
+    container_name: api
+    ports:
+      - "8080:80"
+    depends_on:
+      - pedelogo-mongodb
+    networks:
+      - pedelogo
+    environment:
+       MONGO__HOST: "pedelogo-mongodb"
+       MONGO__USER: "mongouser"
+       MONGO__PASSWORD: "mongopwd"
+       MONGO__PORT: 27017
+       MONGO__DATABASE: "admin"
+
+  pedelogo-mongodb:
+      image: mongo:latest
+      container_name: pedelogo-mongodb
+      ports:
+        - "27017:27017"
+      networks:
+        - pedelogo
+      environment:
+        MONGO_INITDB_ROOT_USERNAME: "mongouser"
+        MONGO_INITDB_ROOT_PASSWORD: "mongopwd"   
+
+  mongo-exporter:
+    image: fabricioveronez/mongo_exporter:latest
+    container_name: mongo-exporter
+    ports:
+      - "9216:9216"
+    networks:
+      - pedelogo    
+    environment:
+      MONGODB_URI: "mongodb://mongouser:mongopwd@pedelogo-mongodb:27017"
+    depends_on:
+      - pedelogo-mongodb
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+    networks:
+      - pedelogo    
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml
+
+  grafana:
+    image: grafana/grafana:11.5.1
+    container_name: grafana
+    volumes:
+        - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+        - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - pedelogo
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.0
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    ports:
+      - 9093:9093
+    networks:
+      - pedelogo 
+
+  alertview:
+    image: fabricioveronez/prom-alertview:v1
+    container_name: alertview
+    ports:
+      - 8181:8080
+    networks:
+      - pedelogo
+
+networks:
+  pedelogo:
+    driver: bridge

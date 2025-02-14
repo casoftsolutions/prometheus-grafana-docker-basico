@@ -1,0 +1,39 @@
+route:
+  receiver: 'Default'
+  group_by: ['alertname', 'team', 'instance']
+  group_wait: 15s
+  group_interval: 15s
+  repeat_interval: 1m
+  routes:
+    # Rota para MongoDB
+    - receiver: AlertaDatabase
+      group_wait: 10s
+      match:  # Match exato na label 'team'
+        team: "mongodb"
+      continue: true  # Permite verificar outras rotas
+
+    # Rota para WebApi
+    - receiver: AlertaWebApi
+      group_wait: 10s
+      match:
+        team: "webapi"
+      continue: true
+
+    # Rota padrão (fallback)
+    - receiver: Default
+      match:
+        team: ""  # Captura alertas SEM a label 'team'
+      continue: false
+
+receivers:
+  - name: Default
+    webhook_configs:
+      - url: 'http://alertview:8080'
+
+  - name: AlertaDatabase
+    webhook_configs:
+      - url: 'http://alertview:8080'
+
+  - name: AlertaWebApi
+    webhook_configs:
+      - url: 'http://alertview:8080'
