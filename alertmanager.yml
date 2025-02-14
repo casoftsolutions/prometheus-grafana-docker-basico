@@ -28,12 +28,12 @@ route:
 receivers:
   - name: Default
     webhook_configs:
-      - url: 'http://alertview:8080'
+      - url: 'http://alertview:8080/webhook'
 
   - name: AlertaDatabase
     webhook_configs:
-      - url: 'http://alertview:8080'
+      - url: 'http://alertview:8080/webhook'
 
   - name: AlertaWebApi
     webhook_configs:
-      - url: 'http://alertview:8080'
+      - url: 'http://alertview:8080/webhook'

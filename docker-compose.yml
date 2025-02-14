@@ -77,7 +77,7 @@ services:
       - pedelogo 
 
   alertview:
-    image: fabricioveronez/prom-alertview:v1
+    image: cesarags/webhookuc:v1
     container_name: alertview
     ports:
       - 8181:8080
